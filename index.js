@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors');
+require('dotenv').config()
 const app = express()
 app.use(cors())
 app.use(express.json());
@@ -11,7 +12,7 @@ const port = process.env.PORT || 5000;
 // mongodb userName, pass
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const uri = "mongodb+srv://EcoTrackDBUser:BAuifZfPWeFAQyZP@cluster0.ogvd1me.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ogvd1me.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -34,6 +35,7 @@ async function run() {
         // mongoDB------------------
         const EcoTrack_DB = client.db("EcoTrack_DB");
         const challengesCollection = EcoTrack_DB.collection("challenges");
+        const usersCollection = EcoTrack_DB.collection("users");
         // mongoDB__________________
 
         // APIs---------------------
@@ -75,6 +77,28 @@ async function run() {
             res.send(result);
         })
         //challenges APIs_______________________
+
+        // users APIs---------------------------
+        app.post('/api/users', async (req,res) => {
+            const newUser = req.body;
+            const email = req.body.user_email;
+            const query = { user_email: email};
+            const existingUser = await usersCollection.findOne(query);
+            if(existingUser) {
+                res.send({message : 'User already exist in database. Do not need to insert!'});
+            }
+            else {
+                const result = await usersCollection.insertOne(newUser);
+                res.send(result);
+            }
+        })
+        // unUsed users API
+        app.get('/api/users', async (req,res) => {
+            const cursor = usersCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+        // users APIs___________________________
         //APIs______________________
 
         // project code---------------------(end)
